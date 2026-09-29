@@ -394,6 +394,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
             <th data-covsort="grupo">Grupo<span class="arrow">▾</span></th>
             <th data-covsort="colecao">Coleção<span class="arrow">▾</span></th>
             <th data-covsort="item">Local / Ativo<span class="arrow">▾</span></th>
+            <th data-covsort="formularios_aplicados">Checklist(s) Aplicado(s)<span class="arrow">▾</span></th>
             <th data-covsort="checklists_aplicados">Checklists Aplicados<span class="arrow">▾</span></th>
             <th data-covsort="status">Status<span class="arrow">▾</span></th>
           </tr>
@@ -800,8 +801,8 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
   }
 
   // ================= Coverage (locais cadastrados x aplicados) =================
-  const COVERAGE = JSON.parse(document.getElementById('coverage').textContent);
-  COVERAGE.forEach(r=>{ r._unidade = grupoUnidade(r.grupo); });
+  const BASE_REGISTRY = JSON.parse(document.getElementById('coverage').textContent);
+  BASE_REGISTRY.forEach(r=>{ r._unidade = grupoUnidade(r.grupo); });
   const covState = { grupo:[], search:'', statusFilter:'', sortKey:'checklists_aplicados', sortDir:1, page:1 };
   const COV_PAGE_SIZE = 25;
 
@@ -814,7 +815,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
   }
 
   function covUniqueSorted(field){
-    return Array.from(new Set(COVERAGE.map(r=>r[field]).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    return Array.from(new Set(BASE_REGISTRY.map(r=>r[field]).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'pt-BR'));
   }
 
   const msCovGrupo = makeMultiSelect('ms-cov-grupo-btn','ms-cov-grupo-panel', covUniqueSorted('grupo'), 'Todos', vals=>{ covState.grupo=vals; covState.page=1; renderCoverage(); });
@@ -822,8 +823,36 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
   document.getElementById('covSearchBox').addEventListener('input', e=>{ covState.search = e.target.value.toLowerCase(); covState.page=1; renderCoverage(); });
   document.getElementById('cov-status').addEventListener('change', e=>{ covState.statusFilter = e.target.value; covState.page=1; renderCoverage(); });
 
+  // builds {codigo -> {events:Set, formularios:Set, nc:number}} from the currently filtered occurrences
+  // (this is what makes "which checklist was applied where" reflect the active filters, incl. the Checklist filter)
+  function computeCoverageStats(rows){
+    const map = new Map();
+    rows.forEach(r=>{
+      if(!r.local_codigo) return;
+      let e = map.get(r.local_codigo);
+      if(!e){ e = { events:new Set(), formularios:new Set(), nc:0 }; map.set(r.local_codigo, e); }
+      e.events.add(r.event_id);
+      e.formularios.add(r.formulario);
+      if(r.status==='Não Conforme') e.nc++;
+    });
+    return map;
+  }
+
+  function buildEnrichedCoverage(){
+    const statsMap = computeCoverageStats(filteredForCharts());
+    return BASE_REGISTRY.map(r=>{
+      const s = r.codigo ? statsMap.get(r.codigo) : null;
+      return {
+        ...r,
+        checklists_aplicados: s ? s.events.size : 0,
+        nao_conformidades: s ? s.nc : 0,
+        formularios_aplicados: s ? Array.from(s.formularios).sort() : [],
+      };
+    });
+  }
+
   function covFiltered(){
-    return COVERAGE.filter(r=>{
+    return buildEnrichedCoverage().filter(r=>{
       if(state.unidade.length && (!r._unidade || !state.unidade.includes(r._unidade))) return false;
       if(covState.grupo.length && !covState.grupo.includes(r.grupo)) return false;
       if(covState.statusFilter==='aplicado' && !(r.checklists_aplicados>0)) return false;
@@ -836,8 +865,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
     });
   }
 
-  function renderCovKPIs(){
-    const rows = covFiltered();
+  function renderCovKPIs(rows){
     const total = rows.length;
     const applied = rows.filter(r=>r.checklists_aplicados>0).length;
     const pending = total - applied;
@@ -861,14 +889,16 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
     return rows.slice().sort((a,b)=>{
       let va=a[key], vb=b[key];
       if(key==='status'){ va = a.checklists_aplicados>0?1:0; vb = b.checklists_aplicados>0?1:0; }
+      if(key==='formularios_aplicados'){ va = a.formularios_aplicados.join(', '); vb = b.formularios_aplicados.join(', '); }
       if(typeof va === 'number') return (va-vb)*dir;
       return String(va||'').localeCompare(String(vb||''),'pt-BR')*dir;
     });
   }
 
   function renderCoverage(){
-    renderCovKPIs();
-    const rows = covSortRows(covFiltered());
+    const filtered = covFiltered();
+    renderCovKPIs(filtered);
+    const rows = covSortRows(filtered);
     document.getElementById('covResultCount').textContent = rows.length + (rows.length===1?' local':' locais');
     const totalPages = Math.max(1, Math.ceil(rows.length / COV_PAGE_SIZE));
     if(covState.page > totalPages) covState.page = totalPages;
@@ -887,10 +917,14 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
         const badge = applied
           ? '<span class="badge c">Aplicado</span>'
           : '<span class="badge nc">Pendente</span>';
+        const chkCell = r.formularios_aplicados.length
+          ? r.formularios_aplicados.map(f=>'<span class="chk-tag">'+escapeHtml(f)+'</span>').join('')
+          : '<span style="color:var(--ink-faint);">—</span>';
         return '<tr>'+
           '<td>'+escapeHtml(r.grupo)+'</td>'+
           '<td>'+escapeHtml(r.colecao)+'</td>'+
           '<td style="font-weight:500;">'+escapeHtml(r.item)+'</td>'+
+          '<td style="max-width:200px;">'+chkCell+'</td>'+
           '<td style="text-align:center;font-family:\'Space Grotesk\',sans-serif;font-weight:600;">'+r.checklists_aplicados+
             (r.nao_conformidades>0 ? ' <span style="color:var(--c-nc);font-size:11px;font-weight:500;">('+r.nao_conformidades+' NC)</span>' : '')+
           '</td>'+
