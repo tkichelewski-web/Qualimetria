@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#F4F7F0; --panel:#FFFFFF; --panel-soft:#EAF1E3; --ink:#122A1F; --ink-soft:#4C6357; --ink-faint:#7E9488;
@@ -71,8 +72,8 @@ header.top{
 .brand h1{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;margin:0;letter-spacing:-0.01em;}
 .brand p{margin:1px 0 0;color:var(--ink-soft);font-size:12.5px;}
 .last-updated{color:var(--ink-faint);font-size:12px;text-align:right;}
-.filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;}
-@media(max-width:1100px){.filters{grid-template-columns:repeat(3,minmax(0,1fr));}}
+.filters{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;}
+@media(max-width:1300px){.filters{grid-template-columns:repeat(4,minmax(0,1fr));}}
 @media(max-width:640px){.filters{grid-template-columns:repeat(2,minmax(0,1fr));}}
 .filter-field{display:flex;flex-direction:column;gap:3px;min-width:0;}
 .filter-field label{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);font-weight:500;padding-left:1px;}
@@ -162,6 +163,26 @@ main{max-width:1400px;margin:0 auto;padding:22px 20px 60px;}
 .rank-row .cnt{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--c-nc);}
 .rank-row.clickable{cursor:pointer;border-radius:6px;}
 .rank-row.clickable:hover{background:var(--panel-soft);}
+.mini-track{height:9px;border-radius:4px;background:var(--panel-soft);overflow:hidden;position:relative;width:90px;display:inline-block;vertical-align:middle;margin-right:8px;}
+.mini-fill{height:100%;background:var(--c-nc);border-radius:4px 0 0 4px;display:block;}
+.chk-tag{display:inline-block;font-size:10.5px;color:var(--ink-soft);background:var(--panel-soft);border-radius:999px;padding:2px 8px;margin:2px 4px 0 0;white-space:nowrap;}
+.loc-tag{display:inline-block;font-size:10.5px;color:var(--ink-soft);background:transparent;border:1px solid var(--border);border-radius:999px;padding:2px 8px 2px 6px;margin:2px 4px 0 0;white-space:nowrap;}
+.loc-tag-more{color:var(--ink-faint);border-style:dashed;}
+.action-card{display:flex;gap:14px;align-items:flex-start;padding:16px 4px;border-bottom:1px solid var(--border);}
+.action-card:last-child{border-bottom:none;}
+.action-rank{width:30px;height:30px;border-radius:50%;background:var(--c-nc-bg);color:var(--c-nc-ink);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none;}
+.action-body{flex:1;min-width:0;}
+.action-question{font-weight:500;font-size:14px;line-height:1.45;color:var(--ink);}
+.action-meta{margin-top:7px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;}
+.action-affects{font-size:11.5px;color:var(--ink-faint);margin-left:2px;}
+.action-stat{flex:none;text-align:right;min-width:130px;}
+.action-nc-count{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--c-nc);line-height:1;}
+.action-nc-label{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);margin-top:2px;}
+.action-taxa{font-size:11px;color:var(--ink-soft);margin-top:6px;white-space:nowrap;}
+@media(max-width:640px){
+  .action-card{flex-direction:column;}
+  .action-stat{text-align:left;margin-top:2px;}
+}
 
 .stack-row{margin-bottom:12px;}
 .stack-row .head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
@@ -187,6 +208,14 @@ main{max-width:1400px;margin:0 auto;padding:22px 20px 60px;}
 .search-box input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
 .search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--ink-faint);}
 .count-pill{font-size:12px;color:var(--ink-soft);white-space:nowrap;padding:6px 10px;background:var(--panel-soft);border-radius:999px;}
+.btn-export{
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+  background:var(--c-conforme);color:var(--accent-ink);border:none;border-radius:8px;
+  padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+}
+.btn-export svg{width:14px;height:14px;}
+.btn-export:hover{filter:brightness(1.06);}
+.btn-export:active{filter:brightness(0.96);}
 table{width:100%;border-collapse:collapse;font-size:12.5px;}
 thead th{
   position:sticky;top:0;background:var(--panel-soft);text-align:left;padding:9px 12px;
@@ -249,6 +278,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
       <div class="filter-field"><label>Diretoria</label><div class="ms" id="ms-diretoria"><button type="button" class="ms-btn" id="ms-diretoria-btn">Todas</button><div class="ms-panel" id="ms-diretoria-panel" hidden></div></div></div>
       <div class="filter-field"><label>Gerência</label><div class="ms" id="ms-gerencia"><button type="button" class="ms-btn" id="ms-gerencia-btn">Todas</button><div class="ms-panel" id="ms-gerencia-panel" hidden></div></div></div>
       <div class="filter-field"><label>Local / Ativo</label><div class="ms" id="ms-local"><button type="button" class="ms-btn" id="ms-local-btn">Todos</button><div class="ms-panel" id="ms-local-panel" hidden></div></div></div>
+      <div class="filter-field"><label>Checklist</label><div class="ms" id="ms-formulario"><button type="button" class="ms-btn" id="ms-formulario-btn">Todos</button><div class="ms-panel" id="ms-formulario-panel" hidden></div></div></div>
       <div class="filter-field"><label>Auditor</label><div class="ms" id="ms-auditor"><button type="button" class="ms-btn" id="ms-auditor-btn">Todos</button><div class="ms-panel" id="ms-auditor-panel" hidden></div></div></div>
       <div class="filter-field"><label>Auditado</label><div class="ms" id="ms-auditado"><button type="button" class="ms-btn" id="ms-auditado-btn">Todos</button><div class="ms-panel" id="ms-auditado-panel" hidden></div></div></div>
     </div>
@@ -282,6 +312,52 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
         <span><i style="background:var(--c-conforme)"></i>Conforme</span>
         <span><i style="background:var(--c-om)"></i>Oportunidade de Melhoria</span>
         <span><i style="background:var(--c-nc)"></i>Não Conforme</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <h2>Itens do Checklist Mais Reprovados</h2>
+    <span class="hint">top 5 perguntas com mais reprovações</span>
+  </div>
+  <div class="panel" style="margin-bottom:12px;">
+    <div id="itemsCardList"></div>
+  </div>
+  <div style="text-align:right;margin-bottom:32px;">
+    <button class="btn-clear" id="btnToggleItemsTable">Ver tabela completa de itens</button>
+  </div>
+  <div class="table-wrap" id="itemsTableWrap" style="display:none;margin-bottom:32px;">
+    <div class="table-toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="itemsSearchBox" placeholder="Buscar pergunta do checklist...">
+      </div>
+      <span class="count-pill" id="itemsResultCount"></span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th data-itemsort="item">Pergunta do Checklist<span class="arrow">▾</span></th>
+            <th data-itemsort="formularios">Checklist(s)<span class="arrow">▾</span></th>
+            <th data-itemsort="nc">Não Conforme<span class="arrow">▾</span></th>
+            <th data-itemsort="om">Oport. Melhoria<span class="arrow">▾</span></th>
+            <th data-itemsort="conforme">Conforme<span class="arrow">▾</span></th>
+            <th data-itemsort="taxa_nc">Taxa de Reprovação<span class="arrow">▾</span></th>
+          </tr>
+        </thead>
+        <tbody id="itemsTblBody"></tbody>
+      </table>
+    </div>
+    <div id="itemsEmptyState" class="empty-state" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <div>Nenhum item encontrado para os filtros aplicados.</div>
+    </div>
+    <div class="pager">
+      <span id="itemsPageInfo"></span>
+      <div class="btns">
+        <button id="itemsPrevPage">Anterior</button>
+        <button id="itemsNextPage">Próxima</button>
       </div>
     </div>
   </div>
@@ -349,6 +425,10 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
         <input type="text" id="searchBox" placeholder="Buscar por descrição, local, auditor, auditado, item...">
       </div>
       <span class="count-pill" id="resultCount"></span>
+      <button class="btn-export" id="btnExportExcel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+        Exportar para Excel
+      </button>
     </div>
     <div style="overflow-x:auto;">
       <table>
@@ -411,7 +491,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
   document.getElementById('lastUpdated').textContent = maxDate ? ('Última inspeção: ' + maxDate.toLocaleDateString('pt-BR')) : '';
 
   // ---- filter state ----
-  const state = { unidade:[], diretoria:[], gerencia:[], local:[], auditor:[], auditado:[], status:'', search:'', sortKey:'data', sortDir:-1, page:1, distBy:'gerencia' };
+  const state = { unidade:[], diretoria:[], gerencia:[], local:[], formulario:[], auditor:[], auditado:[], status:'', search:'', sortKey:'data', sortDir:-1, page:1, distBy:'gerencia' };
   const PAGE_SIZE = 25;
 
   function uniqueSorted(field){
@@ -466,18 +546,19 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
     };
   }
 
-  function renderAll(){ render(); renderCoverage(); }
+  function renderAll(){ render(); renderItems(); renderCoverage(); }
 
   const msUnidade  = makeMultiSelect('ms-unidade-btn','ms-unidade-panel', uniqueSorted('unidade'), 'Todas', vals=>{ state.unidade=vals; state.page=1; renderAll(); });
   const msDiretoria = makeMultiSelect('ms-diretoria-btn','ms-diretoria-panel', uniqueSorted('diretoria'), 'Todas', vals=>{ state.diretoria=vals; state.page=1; renderAll(); });
   const msGerencia = makeMultiSelect('ms-gerencia-btn','ms-gerencia-panel', uniqueSorted('gerencia'), 'Todas', vals=>{ state.gerencia=vals; state.page=1; renderAll(); });
   const msLocal    = makeMultiSelect('ms-local-btn','ms-local-panel', uniqueSorted('local'), 'Todos', vals=>{ state.local=vals; state.page=1; renderAll(); });
+  const msFormulario = makeMultiSelect('ms-formulario-btn','ms-formulario-panel', uniqueSorted('formulario'), 'Todos', vals=>{ state.formulario=vals; state.page=1; renderAll(); });
   const msAuditor  = makeMultiSelect('ms-auditor-btn','ms-auditor-panel', uniqueSorted('auditor'), 'Todos', vals=>{ state.auditor=vals; state.page=1; renderAll(); });
   const msAuditado = makeMultiSelect('ms-auditado-btn','ms-auditado-panel', uniqueSorted('auditado'), 'Todos', vals=>{ state.auditado=vals; state.page=1; renderAll(); });
 
   document.getElementById('btnClear').addEventListener('click', ()=>{
-    [msUnidade, msDiretoria, msGerencia, msLocal, msAuditor, msAuditado].forEach(ms=>ms.clear());
-    state.unidade=[]; state.diretoria=[]; state.gerencia=[]; state.local=[]; state.auditor=[]; state.auditado=[];
+    [msUnidade, msDiretoria, msGerencia, msLocal, msFormulario, msAuditor, msAuditado].forEach(ms=>ms.clear());
+    state.unidade=[]; state.diretoria=[]; state.gerencia=[]; state.local=[]; state.formulario=[]; state.auditor=[]; state.auditado=[];
     state.status=''; state.search=''; document.getElementById('searchBox').value='';
     state.page=1; renderAll();
   });
@@ -496,6 +577,7 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
     if(state.diretoria.length && !state.diretoria.includes(r.diretoria)) return false;
     if(state.gerencia.length && !state.gerencia.includes(r.gerencia)) return false;
     if(state.local.length && !state.local.includes(r.local)) return false;
+    if(state.formulario.length && !state.formulario.includes(r.formulario)) return false;
     if(state.auditor.length && !state.auditor.includes(r.auditor)) return false;
     if(state.auditado.length && !state.auditado.includes(r.auditado)) return false;
     return true;
@@ -670,6 +752,32 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
   }
 
   document.getElementById('prevPage').addEventListener('click', ()=>{ if(state.page>1){ state.page--; renderTable(); window.scrollTo({top:0,behavior:'smooth'});} });
+
+  document.getElementById('btnExportExcel').addEventListener('click', ()=>{
+    const rows = sortRows(filteredForTable());
+    if(!rows.length){ alert('Nenhuma ocorrência para exportar com os filtros atuais.'); return; }
+    const exportData = rows.map(r=>({
+      'Data': r.data || '',
+      'Checklist': r.formulario || '',
+      'Status': r.status || '',
+      'Item do Checklist': r.item || '',
+      'Descrição do Apontamento': r.descricao || '',
+      'Unidade': r.unidade || '',
+      'Diretoria': r.diretoria || '',
+      'Gerência': r.gerencia || '',
+      'Local / Ativo': r.local || '',
+      'Auditor': r.auditor || '',
+      'Auditado': r.auditado || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    ws['!cols'] = [
+      {wch:11},{wch:18},{wch:20},{wch:42},{wch:42},{wch:14},{wch:24},{wch:26},{wch:22},{wch:24},{wch:24}
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ocorrências');
+    const today = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, 'qualimetria_ocorrencias_'+today+'.xlsx');
+  });
   document.getElementById('nextPage').addEventListener('click', ()=>{ state.page++; renderTable(); window.scrollTo({top:0,behavior:'smooth'}); });
 
   document.querySelectorAll('thead th[data-sort]').forEach(th=>{
@@ -809,7 +917,137 @@ footer{max-width:1400px;margin:0 auto;padding:0 20px 40px;color:var(--ink-faint)
     });
   });
 
+  // ================= Itens do checklist mais reprovados =================
+  const itemsState = { search:'', sortKey:'nc', sortDir:-1, page:1 };
+  const ITEMS_PAGE_SIZE = 15;
+
+  function computeItemStats(rows){
+    const map = new Map();
+    rows.forEach(r=>{
+      let e = map.get(r.item);
+      if(!e){ e = { item:r.item, formularios:new Set(), gerencias:new Set(), locais:new Set(), conforme:0, om:0, nc:0, na:0 }; map.set(r.item, e); }
+      e.formularios.add(r.formulario);
+      e.gerencias.add(r.gerencia);
+      e.locais.add(r.local);
+      if(r.status==='Conforme') e.conforme++;
+      else if(r.status==='Oportunidade de Melhoria') e.om++;
+      else if(r.status==='Não Conforme') e.nc++;
+      else if(r.status==='Não Aplicável') e.na++;
+    });
+    return Array.from(map.values()).map(e=>{
+      const avaliados = e.conforme + e.om + e.nc;
+      return { ...e, formularios: Array.from(e.formularios).sort(), locais: Array.from(e.locais).sort(), n_gerencias: e.gerencias.size, n_locais: e.locais.size, avaliados, taxa_nc: avaliados ? (e.nc/avaliados*100) : 0 };
+    });
+  }
+
+  document.getElementById('btnToggleItemsTable').addEventListener('click', ()=>{
+    const wrap = document.getElementById('itemsTableWrap');
+    const btn = document.getElementById('btnToggleItemsTable');
+    const showing = wrap.style.display !== 'none';
+    wrap.style.display = showing ? 'none' : 'block';
+    btn.textContent = showing ? 'Ver tabela completa de itens' : 'Ocultar tabela completa';
+  });
+
+  document.getElementById('itemsSearchBox').addEventListener('input', e=>{
+    itemsState.search = e.target.value.toLowerCase(); itemsState.page=1; renderItems();
+  });
+
+  let ITEM_STATS = [];
+
+  function itemsFiltered(){
+    if(!itemsState.search) return ITEM_STATS;
+    return ITEM_STATS.filter(e=>(e.item+' '+e.formularios.join(' ')).toLowerCase().includes(itemsState.search));
+  }
+  function itemsSorted(rows){
+    const key = itemsState.sortKey, dir = itemsState.sortDir;
+    return rows.slice().sort((a,b)=>{
+      let va, vb;
+      if(key==='formularios'){ va = a.formularios.join(', '); vb = b.formularios.join(', '); }
+      else { va = a[key]; vb = b[key]; }
+      if(typeof va === 'number') return (va-vb)*dir;
+      return String(va||'').localeCompare(String(vb||''),'pt-BR')*dir;
+    });
+  }
+  function renderItemsCards(){
+    const top = ITEM_STATS.filter(e=>e.nc>0).slice().sort((a,b)=> b.nc-a.nc || b.taxa_nc-a.taxa_nc).slice(0,5);
+    const list = document.getElementById('itemsCardList');
+    if(!top.length){
+      list.innerHTML = '<div class="empty-state" style="padding:24px 0;">Nenhuma não conformidade encontrada no recorte atual.</div>';
+      return;
+    }
+    list.innerHTML = top.map((e,i)=>{
+      const LOC_LIMIT = 4;
+      const shownLocais = e.locais.slice(0, LOC_LIMIT);
+      const extra = e.locais.length - shownLocais.length;
+      return '<div class="action-card">'+
+        '<div class="action-rank">'+(i+1)+'</div>'+
+        '<div class="action-body">'+
+          '<div class="action-question">'+escapeHtml(e.item)+'</div>'+
+          '<div class="action-meta">'+
+            e.formularios.map(f=>'<span class="chk-tag">'+escapeHtml(f)+'</span>').join('')+
+          '</div>'+
+          '<div class="action-meta">'+
+            shownLocais.map(l=>'<span class="loc-tag">📍 '+escapeHtml(l)+'</span>').join('')+
+            (extra>0 ? '<span class="loc-tag loc-tag-more">+'+extra+' local'+(extra>1?'is':'')+'</span>' : '')+
+          '</div>'+
+        '</div>'+
+        '<div class="action-stat">'+
+          '<div class="action-nc-count">'+e.nc+'</div>'+
+          '<div class="action-nc-label">Não Conformes</div>'+
+          '<div style="margin-top:6px;"><span class="mini-track"><span class="mini-fill" style="width:'+Math.max(4,Math.round(e.taxa_nc))+'%"></span></span></div>'+
+          '<div class="action-taxa">'+e.taxa_nc.toFixed(0)+'% de reprovação</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  function renderItems(){
+    ITEM_STATS = computeItemStats(filteredForCharts());
+    renderItemsCards();
+    const rows = itemsSorted(itemsFiltered());
+    document.getElementById('itemsResultCount').textContent = rows.length + (rows.length===1?' item':' itens');
+    const totalPages = Math.max(1, Math.ceil(rows.length / ITEMS_PAGE_SIZE));
+    if(itemsState.page > totalPages) itemsState.page = totalPages;
+    const startIdx = (itemsState.page-1)*ITEMS_PAGE_SIZE;
+    const pageRows = rows.slice(startIdx, startIdx+ITEMS_PAGE_SIZE);
+    const tbody = document.getElementById('itemsTblBody');
+    const emptyState = document.getElementById('itemsEmptyState');
+    if(!pageRows.length){
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+    } else {
+      emptyState.style.display = 'none';
+      tbody.innerHTML = pageRows.map(e=>{
+        const pct = Math.max(e.taxa_nc>0?4:0, Math.round(e.taxa_nc));
+        return '<tr>'+
+          '<td style="max-width:340px;font-weight:500;">'+escapeHtml(e.item)+'</td>'+
+          '<td>'+e.formularios.map(f=>'<span class="chk-tag">'+escapeHtml(f)+'</span>').join('')+'</td>'+
+          '<td style="text-align:center;color:var(--c-nc);font-family:\'Space Grotesk\',sans-serif;font-weight:600;">'+e.nc+'</td>'+
+          '<td style="text-align:center;color:var(--c-om-ink);font-family:\'Space Grotesk\',sans-serif;font-weight:600;">'+e.om+'</td>'+
+          '<td style="text-align:center;color:var(--c-conforme);font-family:\'Space Grotesk\',sans-serif;font-weight:600;">'+e.conforme+'</td>'+
+          '<td style="white-space:nowrap;"><span class="mini-track"><span class="mini-fill" style="width:'+pct+'%"></span></span>'+e.taxa_nc.toFixed(0)+'%</td>'+
+        '</tr>';
+      }).join('');
+    }
+    document.getElementById('itemsPageInfo').textContent = rows.length ? ('Página '+itemsState.page+' de '+totalPages) : '';
+    document.getElementById('itemsPrevPage').disabled = itemsState.page<=1;
+    document.getElementById('itemsNextPage').disabled = itemsState.page>=totalPages;
+  }
+  document.getElementById('itemsPrevPage').addEventListener('click', ()=>{ if(itemsState.page>1){ itemsState.page--; renderItems(); } });
+  document.getElementById('itemsNextPage').addEventListener('click', ()=>{ itemsState.page++; renderItems(); });
+  document.querySelectorAll('thead th[data-itemsort]').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.getAttribute('data-itemsort');
+      if(itemsState.sortKey===key){ itemsState.sortDir *= -1; } else { itemsState.sortKey = key; itemsState.sortDir = (key==='item'||key==='formularios') ? 1 : -1; }
+      th.closest('table').querySelectorAll('thead th').forEach(x=>x.classList.remove('sorted'));
+      th.classList.add('sorted');
+      th.querySelector('.arrow').textContent = itemsState.sortDir===1 ? '▴' : '▾';
+      renderItems();
+    });
+  });
+
   render();
+  renderItems();
   renderCoverage();
 })();
 </script>
