@@ -550,22 +550,22 @@ body.em-tour{overflow:auto}
     });
     const itensArr = Object.values(porItem);
     const ck = agrupar(fil, 'check').filter(g => g.nc).sort((a, b) => b.nc - a.nc)[0];
-    const lcs = agrupar(fil.filter(r => r.local), 'local').filter(g => g.nc || g.om).sort((a, b) => b.nc - a.nc || b.om - a.om);
+    const lcs = agrupar(fil.filter(r => r.local).map(r => Object.assign({}, r, { lu: r.local + '|' + r.un })), 'lu').filter(g => g.nc || g.om).sort((a, b) => b.nc - a.nc || b.om - a.om);
     const ms = agrupar(fil, 'mes').filter(g => g.nome && g.conf != null).sort((a, b) => a.nome.localeCompare(b.nome));
     const tend = ms.length >= 2 ? { de: MESC[parseInt(ms[ms.length - 2].nome.slice(5), 10) - 1], para: MESC[parseInt(ms[ms.length - 1].nome.slice(5), 10) - 1], a: ms[ms.length - 2].conf, b: ms[ms.length - 1].conf } : null;
     const locais = lcs.slice(0, 9).map(g => {
       const gerC = {}, it = {};
       g.rows.forEach(r => { gerC[r.ger] = (gerC[r.ger] || 0) + 1; if (r.st === 'NC' || r.st === 'OM') it[r.item] = (it[r.item] || 0) + 1; });
-      return { nome: g.nome, ger: Object.entries(gerC).sort((a, b) => b[1] - a[1])[0][0], aud: g.aud, nc: g.nc, om: g.om, tops: Object.entries(it).sort((a, b) => b[1] - a[1]).slice(0, 2) };
+      return { nome: g.rows[0].local, un: g.rows[0].un, ger: Object.entries(gerC).sort((a, b) => b[1] - a[1])[0][0], aud: g.aud, nc: g.nc, om: g.om, tops: Object.entries(it).sort((a, b) => b[1] - a[1]).slice(0, 2) };
     });
     return {
       vazio: !fil.length, escopo, periodo, escopoCapa: [escopo].concat(extras).join('  •  '),
       recorte: [escopo].concat(extras, [periodo]).join(' · '), data: new Date().toLocaleDateString('pt-BR'), temRecorte,
       k: { aud: k.aud, itens: k.itens, c: k.c, nc: k.nc, om: k.om, na: k.na, conf: k.conf },
       grupoTitulo: porSup ? 'Conformidade por supervisão' : 'Conformidade por gerência' + (agrupar(fil, 'ger').length > 10 ? ' (as 10 com mais qualimetrias)' : ''),
-      grupos: gs.map(g => ({ nome: g.nome, c: g.c, om: g.om, nc: g.nc, conf: g.conf })),
+      grupos: gs.map(g => ({ nome: g.nome, aud: g.aud, c: g.c, om: g.om, nc: g.nc, conf: g.conf })),
       cob: { ap: cob.ap, tot: cob.tot, pct: cob.pct, grupos: cob.grupos.slice().sort((a, b) => a.ap / a.tot - b.ap / b.tot).map(g => ({ nome: g.nome, ap: g.ap, tot: g.tot })) },
-      analise: { emp: resumo(porPeriodo()).conf, checkTop: ck ? { nome: ck.nome, nc: ck.nc } : null, sist: itensArr.filter(g => g.evs.size >= 2).length, localTop: lcs[0] && lcs[0].nc ? { nome: lcs[0].nome, nc: lcs[0].nc, aud: lcs[0].aud } : null, tend },
+      analise: { emp: resumo(porPeriodo()).conf, checkTop: ck ? { nome: ck.nome, nc: ck.nc } : null, sist: itensArr.filter(g => g.evs.size >= 2).length, localTop: lcs[0] && lcs[0].nc ? { nome: lcs[0].rows[0].local + (lcs[0].rows[0].un ? ' (' + lcs[0].rows[0].un + ')' : ''), nc: lcs[0].nc, aud: lcs[0].aud } : null, tend },
       itensTop: itensArr.filter(g => g.evsNC.size).sort((a, b) => b.evsNC.size - a.evsNC.size).slice(0, 7).map(g => ({ item: g.item, nAud: g.evsNC.size })),
       locais,
     };
@@ -687,7 +687,7 @@ body.em-tour{overflow:auto}
     { alvo: '#tela', tab: 'cob', titulo: 'Cobertura de locais', texto: 'Quantos locais de cada área já tiveram qualimetria. Clique numa área para ver a lista de locais e use o filtro de situação para achar os pendentes.' },
     { alvo: '#tela', tab: 'desv', titulo: 'Desvios', texto: 'Cada não conformidade e oportunidade de melhoria, com a descrição do auditor, o local e a gerência. Use a busca para achar um assunto, local ou pessoa, e o botão ao lado para incluir também as respostas conformes.' },
     { alvo: '#tela', tab: 'aud', titulo: 'Auditores', texto: 'Quantas qualimetrias cada auditor fez e quantos desvios apontou no recorte filtrado.' },
-    { alvo: '#gerarPptx', titulo: 'Gerar apresentação', texto: 'Monta na hora um PowerPoint de 5 slides com os filtros aplicados: resultado e conformidade, análise, locais ainda sem qualimetria e onde estão os desvios. Os gráficos são editáveis.' },
+    { alvo: '#gerarPptx', titulo: 'Gerar apresentação', texto: 'Monta na hora um PowerPoint de 4 slides com os filtros aplicados: resultado e conformidade, análise e onde estão os desvios. Os gráficos são editáveis.' },
     { alvo: '#exportar', titulo: 'Exportar para Excel', texto: 'Baixa uma planilha com todas as respostas e a cobertura de locais, já com os filtros aplicados.' },
     { alvo: '#tourBtn', titulo: 'Pronto!', texto: 'Para rever este tour quando quiser, clique em “Tour guiado” no menu.', antes: () => { if (app.classList.contains('recolhido')) aplicarMenu(false); } },
   ];
@@ -941,7 +941,7 @@ body.em-tour{overflow:auto}
   s.addText(D.grupoTitulo, { x: 5.4, y: 1.45, w: 7.3, h: 0.35, fontFace: F, fontSize: 14, bold: true, color: VERDE, margin: 0, isTextBox: true });
   const gs = D.grupos;
   if (gs.length) {
-    const rot = gs.map(g => g.nome + '  (' + p(g.conf) + ')');
+    const rot = gs.map(g => g.nome + '  (' + p(g.conf) + ' · ' + n(g.aud) + (g.aud === 1 ? ' qualimetria' : ' qualimetrias') + ')');
     s.addChart(pres.charts.BAR, [
       { name: 'Conforme', labels: rot, values: gs.map(g => g.c) },
       { name: 'Oportunidade de melhoria', labels: rot, values: gs.map(g => g.om) },
@@ -974,44 +974,22 @@ body.em-tour{overflow:auto}
     Object.assign({ x: 6.7, y: 2.0, w: 5.9, h: 4.55, barDir: 'bar', barGapWidthPct: 40, chartColors: [VERM], showValue: true, dataLabelPosition: 'outEnd', dataLabelColor: TINTA, catAxisOrientation: 'maxMin', catAxisLabelFontSize: 10 }, eixo));
   else vazio(s, 'Nenhuma NC registrada no recorte.', 6.8, 2.2, 5.6);
 
-  // 4. Cobertura de locais
-  s = pres.addSlide({ masterName: 'CONTEUDO' });
-  cabecalho(s, 'Locais ainda sem qualimetria');
-  s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.6, y: 1.45, w: 4.4, h: 5.2, rectRadius: 0.12, fill: { color: CLARO }, line: { color: CLARO } });
-  s.addText([{ text: n(D.cob.tot - D.cob.ap), options: { fontSize: 60, bold: true, color: TINTA } }, { text: ' de ' + n(D.cob.tot), options: { fontSize: 26, bold: true, color: TEXTO } }],
-    { x: 0.9, y: 1.7, w: 3.9, h: 1.1, fontFace: F, margin: 0, valign: 'middle', isTextBox: true });
-  s.addText('locais do catálogo ainda não tiveram nenhuma qualimetria no período', { x: 0.9, y: 2.8, w: 3.8, h: 0.8, fontFace: F, fontSize: 16, color: TINTA, margin: 0, valign: 'top', isTextBox: true });
-  const pA = D.cob.tot ? D.cob.ap / D.cob.tot : 0;
-  s.addShape(pres.shapes.RECTANGLE, { x: 0.9, y: 3.8, w: 3.8, h: 0.45, fill: { color: AMBAR }, line: { color: AMBAR } });
-  if (pA > 0) s.addShape(pres.shapes.RECTANGLE, { x: 0.9, y: 3.8, w: 3.8 * pA, h: 0.45, fill: { color: VERDE }, line: { color: VERDE } });
-  s.addText(n(D.cob.ap) + ' locais com qualimetria (' + p(pA * 100) + ')', { x: 0.9, y: 4.4, w: 3.8, h: 0.4, fontFace: F, fontSize: 13, bold: true, color: TINTA, margin: 0, isTextBox: true });
-  s.addText('A lista completa de locais pendentes está na tela Cobertura de locais do painel e no Excel.', { x: 0.9, y: 5.4, w: 3.8, h: 0.8, fontFace: F, fontSize: 11, color: TEXTO, margin: 0, valign: 'top', isTextBox: true });
-  s.addText('Por área', { x: 5.4, y: 1.45, w: 7.3, h: 0.35, fontFace: F, fontSize: 14, bold: true, color: VERDE, margin: 0, isTextBox: true });
-  const cg = D.cob.grupos.slice(0, 12);
-  if (cg.length) {
-    const rot = cg.map(g => g.nome + '  (' + n(g.ap) + ' de ' + n(g.tot) + ')');
-    s.addChart(pres.charts.BAR, [
-      { name: 'Sem qualimetria', labels: rot, values: cg.map(g => g.tot - g.ap) },
-      { name: 'Com qualimetria', labels: rot, values: cg.map(g => g.ap) },
-    ], Object.assign({ x: 5.3, y: 1.85, w: 7.45, h: 4.35, barDir: 'bar', barGrouping: 'percentStacked', barGapWidthPct: 45, chartColors: [AMBAR, VERDE], showValue: true, dataLabelPosition: 'ctr', dataLabelColor: 'FFFFFF', dataLabelFormatCode: '#,##0;;;', catAxisOrientation: 'maxMin' }, eixo));
-  }
-  legenda(s, [[AMBAR, 'Sem nenhuma qualimetria'], [VERDE, 'Com qualimetria']], 5.45, 6.3);
-
-  // 5. Onde estão os desvios
+  // 4. Onde estão os desvios
   s = pres.addSlide({ masterName: 'CONTEUDO' });
   cabecalho(s, 'Onde estão os desvios');
   const hd = t => ({ text: t, options: { bold: true, color: 'FFFFFF', fill: { color: VERDE }, fontSize: 11 } });
-  const rows = [[hd('Local'), hd('Gerência'), hd('Qualimetrias'), hd('NC'), hd('OM'), hd('Itens que mais falharam')]].concat(
+  const rows = [[hd('Local'), hd('Unidade'), hd('Gerência'), hd('Qualimetrias'), hd('NC'), hd('OM'), hd('Itens que mais falharam')]].concat(
     D.locais.slice(0, 9).map((x, i) => [
       { text: x.nome, options: { bold: true } },
+      { text: x.un || '—', options: { align: 'center' } },
       { text: x.ger, options: { fontSize: 10 } },
       { text: n(x.aud), options: { align: 'right' } },
       { text: n(x.nc), options: { align: 'right', bold: true, color: 'B5301F' } },
       { text: n(x.om), options: { align: 'right' } },
       { text: (x.tops || []).map(t => corta(t[0], 60) + ' (' + t[1] + 'x)').join('\n'), options: { fontSize: 10 } },
     ].map(c => ({ text: c.text, options: Object.assign({ fontSize: 11, color: TINTA, fill: { color: i % 2 ? 'F6FAF2' : 'FFFFFF' }, valign: 'middle' }, c.options) }))));
-  if (rows.length === 1) rows.push([{ text: 'Nenhum desvio no recorte.', options: { colspan: 6, fontSize: 12, color: TEXTO } }]);
-  s.addTable(rows, { x: 0.6, y: 1.45, w: 12.1, colW: [2.3, 2.2, 1.25, 0.6, 0.6, 5.15], fontFace: F, rowH: 0.5, border: { type: 'solid', color: 'E6ECE3', pt: 0.5 }, margin: 0.06 });
+  if (rows.length === 1) rows.push([{ text: 'Nenhum desvio no recorte.', options: { colspan: 7, fontSize: 12, color: TEXTO } }]);
+  s.addTable(rows, { x: 0.6, y: 1.45, w: 12.1, colW: [2.1, 0.9, 2.1, 1.25, 0.6, 0.6, 4.55], fontFace: F, rowH: 0.5, border: { type: 'solid', color: 'E6ECE3', pt: 0.5 }, margin: 0.06 });
   return pres;
 }
 if (typeof window !== 'undefined') window.montarApresentacaoQual = montarApresentacaoQual;
